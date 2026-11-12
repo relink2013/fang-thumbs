@@ -1,0 +1,28 @@
+# FaNG Thumbs next to Nextcloud. Mount the same folders the Nextcloud container sees, at the same paths, read-only.
+services:
+  nextcloud-fang-thumbs:
+    container_name: nextcloud-fang-thumbs
+    image: nextcloud-fang-thumbs:latest
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    restart: unless-stopped
+    environment:
+      - PUID=99            # a user that can read your files (or add DAC_READ_SEARCH below)
+      - PGID=100
+      - FANG_THUMBS_KEY=change-me-to-a-long-random-string
+      - FANG_THUMBS_ROOTS=/data:/mnt/photos   # the folders below, separated by ":"
+      # - FANG_THUMBS_WORKERS=8               # default: half the CPUs
+      # - FANG_THUMBS_QUALITY=80
+    volumes:
+      - /path/to/nextcloud/data:/data:ro      # Nextcloud's data directory, at the path Nextcloud uses
+      - /path/to/photos:/mnt/photos:ro        # any local external storage, at the same path as in Nextcloud
+    cap_add:
+      - DAC_READ_SEARCH    # optional: read files with restrictive modes; the service keeps only this capability
+    cpu_shares: 256        # yields to everything else when the CPUs are busy
+    networks:
+      - nextcloud          # the network your Nextcloud container is on
+
+networks:
+  nextcloud:
+    external: true

@@ -1,0 +1,33 @@
+<?xml version="1.0"?>
+<info xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:noNamespaceSchemaLocation="https://apps.nextcloud.com/schema/apps/info.xsd">
+    <id>fangthumbs</id>
+    <name>FaNG Thumbs</name>
+    <summary>Fast WebP previews for photos, camera RAW and video, from the FaNG Thumbs service</summary>
+    <description><![CDATA[Sends preview generation for images, camera RAW (including Apple ProRAW), video (including ProRes and HDR clips) and PDFs to a FaNG Thumbs container, which renders them in parallel as WebP. It replaces Imaginary. Nextcloud's own preview providers stay on as a fallback, so previews keep working when the service is down.
+
+Configure it with occ:
+
+    occ config:app:set fangthumbs url --value=http://nextcloud-fang-thumbs:9000
+    occ config:app:set fangthumbs key --value=<the service's FANG_THUMBS_KEY>
+    occ fangthumbs:test
+
+Pre-generate previews for everything in parallel with `occ fangthumbs:generate`.]]></description>
+    <version>0.1.0</version>
+    <licence>mit</licence>
+    <author>rlx</author>
+    <namespace>FangThumbs</namespace>
+    <category>files</category>
+    <category>multimedia</category>
+    <website>https://github.com/relink2013/fang-thumbs</website>
+    <bugs>https://github.com/relink2013/fang-thumbs/issues</bugs>
+    <repository type="git">https://github.com/relink2013/fang-thumbs.git</repository>
+    <dependencies>
+        <php min-version="8.1"/>
+        <nextcloud min-version="30" max-version="35"/>
+    </dependencies>
+    <commands>
+        <command>OCA\FangThumbs\Command\Test</command>
+        <command>OCA\FangThumbs\Command\Generate</command>
+    </commands>
+</info>
