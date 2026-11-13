@@ -1,3 +1,10 @@
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/icon-white.svg">
+    <img src="docs/icon-black.svg" width="160" alt="FaNG Thumbs icon">
+  </picture>
+</p>
+
 # FaNG Thumbs
 
 Fast, consistent WebP previews for photos, camera RAW and video, in one container. It's built to replace Imaginary (and Nextcloud's scattered RAW, HEIC and video providers) with a single service that also understands the formats Apple devices and pro cameras produce.
@@ -43,7 +50,7 @@ Nextcloud stores the service's WebP as the largest preview byte for byte, with n
    occ fangthumbs:test
    ```
 
-3. **Generate previews** for everything: `occ fangthumbs:generate` (or `--user`, `--path`). It skips files that already have one, so it can be stopped and restarted.
+3. **Generate previews** for everything: `occ fangthumbs:generate` (or `--user`, `--path`). It skips files that already have one, so it can be stopped and restarted. Storing previews in Nextcloud is one file at a time per process; to go faster, run several side by side with `--shard 0/4`, `--shard 1/4`, … `--shard 3/4`.
 4. Optional: remove `OC\Preview\Imaginary` and `OC\Preview\ImaginaryPDF` from `enabledPreviewProviders` and retire the Imaginary container. Leave Nextcloud's other providers enabled: they're the fallback.
 
 ## Service settings

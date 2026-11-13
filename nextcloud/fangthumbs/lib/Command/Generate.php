@@ -45,7 +45,8 @@ class Generate extends Command {
 			->setDescription('Generate previews for all images and videos, rendered in parallel by FaNG Thumbs')
 			->addOption('user', 'u', InputOption::VALUE_REQUIRED | InputOption::VALUE_IS_ARRAY, 'Only these users (default: all)')
 			->addOption('path', 'p', InputOption::VALUE_REQUIRED, 'Only this folder, as a user sees it, e.g. "/alice/files/Photos"')
-			->addOption('batch', 'b', InputOption::VALUE_REQUIRED, 'Files per batch (default: 4 × the service\'s workers)');
+			->addOption('batch', 'b', InputOption::VALUE_REQUIRED, 'Files per batch (default: 4 × the service\'s workers)')
+			->addOption('shard', null, InputOption::VALUE_REQUIRED, 'Only every Nth file, as "i/N" (0 ≤ i < N): run N of these side by side, i = 0 … N-1');
 	}
 
 	protected function execute(InputInterface $input, OutputInterface $output): int {
@@ -55,6 +56,15 @@ class Generate extends Command {
 			return 1;
 		}
 		$batchSize = (int)($input->getOption('batch') ?: max(8, 4 * (int)($health['workers'] ?? 4)));
+		$shard = (string)($input->getOption('shard') ?? '');
+		if ($shard !== '') {
+			if (!preg_match('#^(\d+)/(\d+)$#', $shard, $m) || (int)$m[2] < 1 || (int)$m[1] >= (int)$m[2]) {
+				$output->writeln('<error>--shard must be "i/N" with 0 ≤ i < N</error>');
+				return 1;
+			}
+			[$this->shardIndex, $this->shardCount] = [(int)$m[1], (int)$m[2]];
+			$batchSize = max(8, intdiv($batchSize, $this->shardCount));
+		}
 		$maxX = $this->config->getSystemValueInt('preview_max_x', 4096);
 		$maxY = $this->config->getSystemValueInt('preview_max_y', 4096);
 		$sizes = $this->sizes();
@@ -95,6 +105,8 @@ class Generate extends Command {
 	private int $failed = 0;
 	private float $started = 0;
 	private int $batchSize = 64;
+	private int $shardIndex = 0;
+	private int $shardCount = 1;
 
 	private function walk(\OCP\Files\Node $node, OutputInterface $output, int $batchSize, int $maxX, int $maxY, array $sizes): void {
 		$this->batchSize = $batchSize;
@@ -125,7 +137,7 @@ class Generate extends Command {
 
 	private function consider(File $file, OutputInterface $output, int $maxX, int $maxY, array $sizes): void {
 		$id = $file->getId();
-		if ($id === null || isset($this->seen[$id]) || $file->getSize() <= 0
+		if ($id === null || $id % $this->shardCount !== $this->shardIndex || isset($this->seen[$id]) || $file->getSize() <= 0
 			|| !preg_match(Provider::MIME_PATTERN, $file->getMimeType())) {
 			return;
 		}
