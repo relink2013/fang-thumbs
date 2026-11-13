@@ -35,7 +35,7 @@ class Client {
 	}
 
 	private function headers(): array {
-		$key = $this->appConfig->getValueString(Application::APP_ID, 'key', '', lazy: true);
+		$key = $this->appConfig->getValueString(Application::APP_ID, 'key', '');
 		return $key === '' ? [] : ['Authorization' => 'Bearer ' . $key];
 	}
 

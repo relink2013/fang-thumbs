@@ -86,6 +86,18 @@ struct RenderTests {
         #expect((p.width, p.height) == (512, 341))
     }
 
+    @Test func tinyEmbeddedPreviewIsNotUsed() async throws {
+        // Only a thumbnail-sized preview embedded, but the file itself can be rendered: render it.
+        let tiny = try make("tiny.jpg", "vips", ["gaussnoise", "OUT", "160", "107"])
+        let body = try make("big.jpg", "vips", ["black", "OUT", "1200", "800"])
+        try run("exiftool", ["-q", "-overwrite_original", "-ThumbnailImage<=\(tiny)", body])
+        let psd = folder + "/files/big.psd"
+        try FileManager.default.moveItem(atPath: body, toPath: psd)
+        let p = try await preview(psd)
+        #expect(p.source == .rendered)
+        #expect((p.width, p.height) == (512, 341))
+    }
+
     @Test func pathRulesAndMapping() async throws {
         _ = try make("mapped.jpg", "vips", ["black", "OUT", "100", "100"])
         let p = try await preview("/nextcloud/data/mapped.jpg")

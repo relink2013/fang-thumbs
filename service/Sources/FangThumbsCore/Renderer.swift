@@ -26,13 +26,7 @@ public struct Renderer: Sendable {
             try renderVideo(input, width: width, height: height, to: output, scratch: scratch)
             return .video
         case .raw:
-            let embedded = scratch + "/embedded.jpg"
-            if extractEmbedded(input, to: embedded),
-               (try? renderImage(embedded, width: width, height: height, to: output)) != nil {
-                return .embedded
-            }
-            try renderImage(input, width: width, height: height, to: output)
-            return .rendered
+            return try embeddedFirst(input, width: width, height: height, to: output, scratch: scratch)
         case .document:
             try renderImage(input, width: width, height: height, to: output)
             return .rendered
@@ -42,11 +36,7 @@ public struct Renderer: Sendable {
                 return .rendered
             }
             if ext == "psd" || ext == "psb" {
-                let embedded = scratch + "/embedded.jpg"
-                if extractEmbedded(input, to: embedded),
-                   (try? renderImage(embedded, width: width, height: height, to: output)) != nil {
-                    return .embedded
-                }
+                return try embeddedFirst(input, width: width, height: height, to: output, scratch: scratch)
             }
             do {
                 try renderImage(input, width: width, height: height, to: output)
@@ -59,6 +49,32 @@ public struct Renderer: Sendable {
                 return .embedded
             }
         }
+    }
+
+    /// RAW and Photoshop files: the embedded preview when it's big enough (at least half the requested size,
+    /// capped at 512 px), else a render of the file itself, else whatever preview is embedded.
+    func embeddedFirst(_ input: String, width: Int, height: Int, to output: String, scratch: String) throws -> Source {
+        let embedded = scratch + "/embedded.jpg"
+        let hasEmbedded = extractEmbedded(input, to: embedded)
+        if hasEmbedded, let size = imageSize(embedded), max(size.width, size.height) >= min(max(width, height) / 2, 512),
+           (try? renderImage(embedded, width: width, height: height, to: output)) != nil {
+            return .embedded
+        }
+        do {
+            try renderImage(input, width: width, height: height, to: output)
+            return .rendered
+        } catch {
+            guard hasEmbedded else { throw error }
+            try renderImage(embedded, width: width, height: height, to: output)
+            return .embedded
+        }
+    }
+
+    /// Width and height of an image file, from its header.
+    func imageSize(_ path: String) -> (width: Int, height: Int)? {
+        guard let output = try? run("vipsheader", ["-f", "width", "-f", "height", path], timeout: 30) else { return nil }
+        let numbers = String(decoding: output, as: UTF8.self).split(whereSeparator: \.isWhitespace).compactMap { Int($0) }
+        return numbers.count >= 2 ? (numbers[0], numbers[1]) : nil
     }
 
     /// A still image to WebP: shrink-on-load, sRGB, EXIF orientation applied, metadata dropped, never enlarged.
