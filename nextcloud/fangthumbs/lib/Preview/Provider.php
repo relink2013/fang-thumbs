@@ -16,7 +16,7 @@ use OCP\Preview\IProviderV2;
  */
 class Provider implements IProviderV2 {
 	/** Every MIME type the service may render; files of other types never reach it. */
-	public const MIME_PATTERN = '/^(image\/(bmp|gif|heic|heif|jp2|jpeg|png|svg\+xml|tga|tiff|webp|x-dcraw|x-icon|avif|jxl|x-exr|x-portable-anymap|vnd\.adobe\.photoshop)|video\/.+|application\/(pdf|illustrator|postscript|x-photoshop))$/i';
+	public const MIME_PATTERN = '/^(image\/(bmp|gif|heic|heif|jp2|jpeg|png|svg\+xml|tga|tiff|webp|x-dcraw|x-icon|avif|jxl|x-exr|x-icns|vnd\.radiance|x-portable-anymap|vnd\.adobe\.photoshop)|video\/.+|application\/(pdf|illustrator|postscript|x-photoshop|mxf))$/i';
 
 	public function __construct(
 		private Client $client,
